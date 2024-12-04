@@ -37,8 +37,8 @@ int main(int argc, char* argv[]) {
 long long Part1(const std::vector<std::string>& outputLines)
 {
     // Create and open a text file
-    std::ofstream MyFile("day3.out");
-    std::ofstream MyFile2("day3-2.out");
+    std::ofstream MyFile("day3-test.out");
+    std::ofstream MyFile2("day3-test2.out");
 
     long long totalSum = 0;
 
@@ -64,6 +64,7 @@ long long Part1(const std::vector<std::string>& outputLines)
 
     // Close the file
     MyFile.close();
+    MyFile2.close();
 
     return totalSum;
 }
@@ -71,8 +72,8 @@ long long Part1(const std::vector<std::string>& outputLines)
 long long Part2(const std::vector<std::string>& outputLines)
 {
     // Create and open a text file
-    std::ofstream MyFile("day3.out");
-    std::ofstream MyFile2("day3-2.out");
+    std::ofstream MyFile("day3-test.out");
+    std::ofstream MyFile2("day3-test2.out");
 
     long long totalSum = 0;
 
@@ -105,6 +106,7 @@ long long Part2(const std::vector<std::string>& outputLines)
 
     // Close the file
     MyFile.close();
+    MyFile2.close();
 
     return totalSum;
 }
