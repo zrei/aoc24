@@ -1,2 +1,11 @@
+# mac compilation and test output files
 *.out
+
+# input files
 *.in
+
+# windows compilation + visual studio
+*.exe
+*.obj
+.vs/aoc24
+.vs/slnx.sqlite
