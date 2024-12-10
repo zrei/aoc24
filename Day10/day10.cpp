@@ -119,7 +119,6 @@ long long BFSUniqueTrails(const std::pair<int, int>& startingCoordinates, const 
 {
     long long uniqueTrails = 0;
     std::vector<std::pair<std::pair<int, int>, char>> q;
-    //std::unordered_map<std::pair<int, int>, int> visitedSpots;
     q.emplace_back(startingCoordinates, '0');
 
     while (!q.empty())
@@ -129,8 +128,6 @@ long long BFSUniqueTrails(const std::pair<int, int>& startingCoordinates, const 
         q.erase(q.begin());
         if (OutOfRange(coordinates, dimensions))
             continue;
-        //if (visitedSpots.find(coordinates) != visitedSpots.end())
-        //    continue;
 
         const auto[row, col] = coordinates;
         if (matrix[row][col] != trailPoint)
@@ -141,7 +138,6 @@ long long BFSUniqueTrails(const std::pair<int, int>& startingCoordinates, const 
             continue;
         }
         
-        //visitedSpots[coordinates] = 1;
         char nextChar = trailPoint + 1;
         q.emplace_back(Move(UP, coordinates), nextChar);
         q.emplace_back(Move(DOWN, coordinates), nextChar);
