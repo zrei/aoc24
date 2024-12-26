@@ -1,8 +1,16 @@
 {
   "ExpandedNodes": [
     "",
-    "\\Local settings (.vs)\\aoc24"
+    "\\Day16",
+    "\\Day17",
+    "\\Day18",
+    "\\Day19",
+    "\\Day20",
+    "\\Day21",
+    "\\Day22",
+    "\\Day23",
+    "\\Day24"
   ],
-  "SelectedNode": "\\.vscode",
+  "SelectedNode": "\\Day23\\day23.cpp",
   "PreviewInSolutionExplorer": false
 }
