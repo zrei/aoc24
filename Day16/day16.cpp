@@ -311,7 +311,7 @@ unsigned long DijkstraAllPaths(const std::vector<std::vector<bool>>& wallPos, co
             continue;
         }
 
-        // has exceeded previous min cost or is same as previous min cost: we have explored this before
+        // has exceeded previous min cost: we have explored this before
         if (shortestDistanceToPoint.find(point->GetKey()) != shortestDistanceToPoint.end() && shortestDistanceToPoint[point->GetKey()] < point->m_Cost)
         {
             continue;

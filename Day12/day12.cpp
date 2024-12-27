@@ -20,8 +20,10 @@ bool IsOutOfBounds(const std::pair<int, int>& point, const std::pair<int, int>& 
 bool IsPerimeterInDirection(const std::pair<int, int>& currPoint, Direction dir, const std::pair<int, int>& dimensions, const std::vector<std::string>& matrix);
 bool HasNextPoint(const std::pair<int, int>& currPoint, const std::pair<int, int>& dimensions, Direction dir, const std::vector<std::string>& matrix);
 Direction TurnRight(Direction dir);
-unsigned long GetAreaValuePart2(const std::pair<int, int>& dimensions, const std::vector<std::string>& matrix, const std::pair<int, int>& point, std::vector<std::vector<bool>>& map);
+unsigned long GetCostPart2(const std::pair<int, int>& dimensions, const std::vector<std::string>& matrix, const std::pair<int, int>& point, std::vector<std::vector<bool>>& map);
+void CountCorners(const std::pair<int, int>& dimensions, const std::vector<std::string>& matrix, const std::pair<int, int>& offset, const std::pair<int, int>& initialCoordinates, unsigned long& numCorners);
 std::string TranslateDir(Direction dir);
+bool NotInRegion(const std::pair<int, int>& dimensions, const std::vector<std::string>& matrix, const std::pair<int, int> coordinates, char regionChara);
 
 namespace std
 {
@@ -74,17 +76,13 @@ long long Part2(const std::vector<std::string>& outputLines)
     CreateMap(dimensions, map);
     long long totalScore = 0;
 
-    GetAreaValuePart2(dimensions, outputLines, { 0, 0 }, map);
-
-    /*
     for (size_t r = 0; r < dimensions.first; ++r)
     {
         for (size_t c = 0; c < dimensions.second; ++c)
         {
-            totalScore += GetAreaValuePart2(dimensions, outputLines, { r, c }, map);
+            totalScore += GetCostPart2(dimensions, outputLines, { r, c }, map);
         }
     }
-    */
 
     return totalScore;
 }
@@ -171,7 +169,7 @@ unsigned long GetAreaValue(const std::pair<int, int>& dimensions, const std::vec
 // a corner is three L shaped same character that DOES NOT have the same character bordering at least one side
 // of the middle character. The number of diff characters bordering the middle section is the number of corners it represents (?)
 // the diff chara can be no chara (i.e. it is on the border)
-unsigned long GetAreaValuePart2(const std::pair<int, int>& dimensions, const std::vector<std::string>& matrix, const std::pair<int, int>& point, std::vector<std::vector<bool>>& map)
+unsigned long GetCostPart2(const std::pair<int, int>& dimensions, const std::vector<std::string>& matrix, const std::pair<int, int>& point, std::vector<std::vector<bool>>& map)
 {
     if (map[point.first][point.second])
         return 0;
@@ -179,6 +177,8 @@ unsigned long GetAreaValuePart2(const std::pair<int, int>& dimensions, const std
     std::unordered_map<std::pair<int, int>, int> visitedPoints;
     std::vector<std::pair<int, int>> q;
     q.push_back(point);
+
+    unsigned long numCorners = 0;
 
     while (!q.empty())
     {
@@ -189,9 +189,14 @@ unsigned long GetAreaValuePart2(const std::pair<int, int>& dimensions, const std
             continue;
         }
         visitedPoints[currPoint] = 1;
-
+       
         map[currPoint.first][currPoint.second] = true;
 
+        CountCorners(dimensions, matrix, {1, 1}, currPoint, numCorners);
+        CountCorners(dimensions, matrix, {1, -1}, currPoint, numCorners);
+        CountCorners(dimensions, matrix, {-1, 1}, currPoint, numCorners);
+        CountCorners(dimensions, matrix, {-1, -1}, currPoint, numCorners);
+        
         if (!IsPerimeterInDirection(currPoint, UP, dimensions, matrix))
         {
             q.push_back(GetPoint(currPoint, UP));
@@ -214,130 +219,29 @@ unsigned long GetAreaValuePart2(const std::pair<int, int>& dimensions, const std
     }
 
     unsigned long area = visitedPoints.size();
+    std::cout << point.first << ", " << point.second << " - area: " << area << ", corners: " << numCorners << std::endl;
 
-    std::pair<int, int> sidePoint = point;
-    Direction currDir = RIGHT;
-    std::cout << "Starting from " << sidePoint.first << ", " << sidePoint.second << std::endl;
-    unsigned long numSides = 0;
-    while (sidePoint != point || currDir != UP)
-    {
-        if (currDir == DOWN)
-        {
-            if (HasNextPoint(sidePoint, dimensions, RIGHT, matrix))
-            {
-                ++numSides;
-                currDir = RIGHT;
-                sidePoint = GetPoint(sidePoint, currDir);
-                continue;
-            }
-            else if (HasNextPoint(sidePoint, dimensions, LEFT, matrix))
-            {
-                ++numSides;
-                currDir = LEFT;
-                sidePoint = GetPoint(sidePoint, currDir);
-                continue;
-            }
-        }
-        else if (currDir == UP)
-        {
-            if (HasNextPoint(sidePoint, dimensions, LEFT, matrix))
-            {
-                ++numSides;
-                currDir = LEFT;
-                sidePoint = GetPoint(sidePoint, currDir);
-                continue;
-            }
-            else if (HasNextPoint(sidePoint, dimensions, RIGHT, matrix))
-            {
-                ++numSides;
-                currDir = RIGHT;
-                sidePoint = GetPoint(sidePoint, currDir);
-                continue;
-            }
-        }
-        else if (currDir == RIGHT)
-        {
-            if (HasNextPoint(sidePoint, dimensions, UP, matrix))
-            {
-                ++numSides;
-                currDir = UP;
-                sidePoint = GetPoint(sidePoint, currDir);
-                continue;
-            }
-            else if (HasNextPoint(sidePoint, dimensions, DOWN, matrix))
-            {
-                ++numSides;
-                currDir = DOWN;
-                sidePoint = GetPoint(sidePoint, currDir);
-                continue;
-            }
-        }
-        else if (currDir == LEFT)
-        {
-            if (HasNextPoint(sidePoint, dimensions, DOWN, matrix))
-            {
-                ++numSides;
-                currDir = DOWN;
-                sidePoint = GetPoint(sidePoint, currDir);
-                continue;
-            }
-            else if (HasNextPoint(sidePoint, dimensions, UP, matrix))
-            {
-                ++numSides;
-                currDir = UP;
-                sidePoint = GetPoint(sidePoint, currDir);
-                continue;
-            }
-        }
+    return area * numCorners;
+}
 
-        sidePoint = GetPoint(sidePoint, currDir);
-        /*
-        while (HasNextPoint(sidePoint, dimensions, currDir, matrix))
-        {
-            std::cout << sidePoint.first << ", " << sidePoint.second << ", direction: " << TranslateDir(currDir) << std::endl;
-            sidePoint = GetPoint(sidePoint, currDir);
-        }
-        std::cout << "No more expansion" << std::endl;
-        ++numSides;
-        if (sidePoint == point)
-        {
-            std::cout << "Got back to same point, direction: " << TranslateDir(currDir) << std::endl;
-            break;
-        }
-        if (sidePoint == point && currDir == UP)
-            break;
-        if (currDir == DOWN)
-        {
-            if (HasNextPoint(sidePoint, dimensions, RIGHT, matrix))
-                currDir = RIGHT;
-            else
-                currDir = LEFT;
-        }
-        else if (currDir == UP)
-        {
-            if (HasNextPoint(sidePoint, dimensions, LEFT, matrix))
-                currDir = LEFT;
-            else
-                currDir = RIGHT;
-        }
-        else if (currDir == RIGHT)
-        {
-            if (HasNextPoint(sidePoint, dimensions, UP, matrix))
-                currDir = UP;
-            else
-                currDir = DOWN;
-        }
-        else
-        {
-            if (HasNextPoint(sidePoint, dimensions, DOWN, matrix))
-                currDir = DOWN;
-            else
-                currDir = UP;
-        }      
-        */
-    }
-    std::cout << "Char: " << matrix[point.first][point.second] << ", area: " << area << ", sides: " << numSides << std::endl;
-    return area * numSides;
+void CountCorners(const std::pair<int, int>& dimensions, const std::vector<std::string>& matrix, const std::pair<int, int>& offset, const std::pair<int, int>& initialCoordinates, unsigned long& numCorners)
+{
+    std::pair<int, int> rowNeighbour = {initialCoordinates.first + offset.first, initialCoordinates.second};
+    std::pair<int, int> colNeighbour = {initialCoordinates.first, initialCoordinates.second + offset.second};
+    std::pair<int, int> diagonalNeighbour = {initialCoordinates.first + offset.first, initialCoordinates.second + offset.second};
+
+    char initialCharacter = matrix[initialCoordinates.first][initialCoordinates.second];
+
+    if (NotInRegion(dimensions, matrix, rowNeighbour, initialCharacter) && NotInRegion(dimensions, matrix, colNeighbour, initialCharacter))
+        ++numCorners;
+
+    if (!NotInRegion(dimensions, matrix, rowNeighbour, initialCharacter) && !NotInRegion(dimensions, matrix, colNeighbour, initialCharacter) && NotInRegion(dimensions, matrix, diagonalNeighbour, initialCharacter))
+        ++numCorners;
+}
+
+bool NotInRegion(const std::pair<int, int>& dimensions, const std::vector<std::string>& matrix, const std::pair<int, int> coordinates, char regionChara)
+{
+    return IsOutOfBounds(coordinates, dimensions) || matrix[coordinates.first][coordinates.second] != regionChara;
 }
 
 std::pair<int, int> GetPoint(const std::pair<int, int>& currPoint, Direction dir)

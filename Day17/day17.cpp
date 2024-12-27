@@ -5,8 +5,8 @@
 #include "../fileRead.h"
 
 constexpr char UNKNOWN_BIT = 2;
-constexpr char B_XOR = 2 ^ 7;
-constexpr int MAX_BITS = 64;
+constexpr char B_XOR = 2 xor 7;
+constexpr int MAX_BITS = 16 * 3 + 8;
 
 class BitsHolder
 {
@@ -94,7 +94,7 @@ bool jnz(char literalOperand);
 void bxc();
 bool jnz(char literalOperand);
 void out(char comboOperand);
-unsigned long outAlternate(char comboOperand);
+char outAlternate(char comboOperand);
 void bdv(char comboOperand);
 void cdv(char comboOperand);
 unsigned long ReadComboOperand(char comboOperand);
@@ -103,6 +103,9 @@ void ParseInstructions(const std::string& s, std::vector<char>& instructions);
 unsigned long long FindMinNumber(const std::vector<char>& instructions, int numInstructions);
 bool CheckNumber(std::shared_ptr<BitsHolder> front, int bitPosStart, char number);
 std::shared_ptr<BitsHolder> ConstructNodes(std::shared_ptr<BitsHolder> currNode, int bitPosition, char number);
+char GetInstruction(char instr);
+char eval(unsigned long long a, const std::vector<char>& instructions);
+long long dfs(long long in_pos, unsigned long long curr, const std::vector<char>& instructions);
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -125,9 +128,9 @@ constexpr int OUT = 5;
 constexpr int BDV = 6;
 constexpr int CDV = 7;
 
-static unsigned long registerA = 0;
-static unsigned long registerB = 0;
-static unsigned long registerC = 0;
+static unsigned long long registerA = 0;
+static unsigned long long registerB = 0;
+static unsigned long long registerC = 0;
 static unsigned long instrPointer = 0;
 
 static std::ofstream FileOut;
@@ -199,91 +202,8 @@ long long Part2(const std::vector<std::string>& outputLines)
     ParseInstructions(outputLines[4], instructions);
 
     int numInstructions = instructions.size();
-
-    /*
-    unsigned long long MAX_NUMBER = std::pow(2, numInstructions * 3) - 1;
-    std::cout << MAX_NUMBER << std::endl;
-
-    for (unsigned long long i = 1; i <= MAX_NUMBER; ++i)
-    {
-        std::cout << "Currently checking: " << i << std::endl;
-        registerA = i;
-        registerB = 0;
-        registerC = 0;
-        instrPointer = 0;
-        int instrToPrint = 0;
-
-        bool shouldStop = false;
-        while (instrPointer < numInstructions)
-        {
-            if (instrToPrint >= numInstructions)
-            {
-                shouldStop = true;
-                break;
-            }
-            switch (instructions[instrPointer])
-            {
-            case ADV:
-                adv(instructions[instrPointer + 1]);
-                instrPointer += 2;
-                break;
-            case BXL:
-                bxl(instructions[instrPointer + 1]);
-                instrPointer += 2;
-                break;
-            case BST:
-                bst(instructions[instrPointer + 1]);
-                instrPointer += 2;
-                break;
-            case JNZ:
-                if (!jnz(instructions[instrPointer + 1]))
-                {
-                    instrPointer += 2;
-                }
-                break;
-            case BXC:
-                bxc();
-                instrPointer += 2;
-                break;
-            case OUT:
-                if (outAlternate(instructions[instrPointer + 1]) != instructions[instrToPrint])
-                {
-                    shouldStop = true;
-                    break;
-                }
-                ++instrToPrint;
-                instrPointer += 2;
-                break;
-            case BDV:
-                bdv(instructions[instrPointer + 1]);
-                instrPointer += 2;
-                break;
-            case CDV:
-                cdv(instructions[instrPointer + 1]);
-                instrPointer += 2;
-                break;
-            }
-
-            if (shouldStop)
-                break;
-        }
-        
-        if (shouldStop)
-            continue;
-
-        std::cout << "Instruction to print right now: " << instrToPrint << std::endl;
-
-        if (instrToPrint < numInstructions - 1)
-            continue;
-
-        return i;
-    }
-
-    return 0;
-    */
-
     
-    return FindMinNumber(instructions, numInstructions);
+    return dfs(numInstructions - 1, 0, instructions);
 }
 
 unsigned long ParseRegister(const std::string& s)
@@ -294,16 +214,18 @@ unsigned long ParseRegister(const std::string& s)
 
 void ParseInstructions(const std::string& s, std::vector<char>& instructions)
 {
-    int colonPointer = s.find(':');
-    std::string v = s.substr(colonPointer + 2);
-    int commaPointer = v.find(',');
+    int commaPointer = s.find(',');
     while (commaPointer != -1)
     {
-        instructions.push_back((char) std::stoi(v.substr(0, commaPointer)));
-        v = v.substr(commaPointer + 1);
-        commaPointer = v.find(',');
+        instructions.push_back(GetInstruction(s[commaPointer - 1]));
+        commaPointer = s.find(',', commaPointer + 1);
     }
-    instructions.push_back(std::stoi(v));
+    instructions.push_back(GetInstruction(s.back()));
+}
+
+char GetInstruction(char instr)
+{
+    return (char) (instr - '0');
 }
 
 void adv(char comboOperand)
@@ -341,7 +263,7 @@ void out(char comboOperand)
     FileOut << ReadComboOperand(comboOperand) % 8 << ",";
 }
 
-unsigned long outAlternate(char comboOperand)
+char outAlternate(char comboOperand)
 {
     return ReadComboOperand(comboOperand) % 8;
 }
@@ -431,7 +353,7 @@ unsigned long long FindMinNumber(const std::vector<char>& instructions, int numI
                     continue;
                 }
 
-                if ((b ^ B_XOR ^ c) == instructions[instructionToPrint])
+                if ((b xor B_XOR xor c) == instructions[instructionToPrint])
                 {
                     std::shared_ptr<BitsHolder> cFront = ConstructNodes(bFront, instructionToPrint * 3 + b, c);
                     q.emplace_back(instructionToPrint + 1, cFront);
@@ -515,4 +437,76 @@ std::shared_ptr<BitsHolder> ConstructNodes(std::shared_ptr<BitsHolder> currNode,
         break;
     }
     return newFront;
+}
+
+char eval(unsigned long long a, const std::vector<char>& instructions)
+{
+	registerA = a; 
+    registerB = 0; 
+    registerC = 0;
+    instrPointer = 0;
+
+    char out[16];
+    int outPtr = 0;
+
+    while (instrPointer < instructions.size())
+    {
+        std::cout << "Current instruction pointer: " << instrPointer << std::endl;
+        switch (instructions[instrPointer])
+        {
+        case ADV:
+            adv(instructions[instrPointer + 1]);
+            instrPointer += 2;
+            break;
+        case BXL:
+            bxl(instructions[instrPointer + 1]);
+            instrPointer += 2;
+            break;
+        case BST:
+            bst(instructions[instrPointer + 1]);
+            instrPointer += 2;
+            break;
+        case JNZ:
+            if (!jnz(instructions[instrPointer + 1]))
+            {
+                instrPointer += 2;
+            }
+            break;
+        case BXC:
+            bxc();
+            instrPointer += 2;
+            break;
+        case OUT:
+            out[outPtr] = outAlternate(instructions[instrPointer + 1]);
+            ++outPtr;
+            instrPointer += 2;
+            break;
+        case BDV:
+            bdv(instructions[instrPointer + 1]);
+            instrPointer += 2;
+            break;
+        case CDV:
+            cdv(instructions[instrPointer + 1]);
+            instrPointer += 2;
+            break;
+        }
+    }
+
+	return out[0];
+}
+
+long long dfs(long long in_pos, unsigned long long curr, const std::vector<char>& instructions)
+{
+	if (in_pos < 0) return curr;
+
+	curr <<= 3;
+	char target = instructions[in_pos];
+	for (char i = 0; i < 8; ++i) {
+		unsigned long long n = curr + i;
+		if (eval(n, instructions) == target) {
+			long long out = dfs(in_pos - 1, n, instructions);
+			if (out >= 0) return out;
+		}
+	}
+	return -1;
 }

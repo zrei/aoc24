@@ -48,6 +48,8 @@
         "unordered_map": "cpp",
         "__hash_table": "cpp",
         "__node_handle": "cpp",
-        "optional": "cpp"
+        "optional": "cpp",
+        "deque": "cpp",
+        "queue": "cpp"
     }
 }
